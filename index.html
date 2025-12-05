@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>边狱公司 - 罪人人格滚动选择器</title>
+    <style>
+        /* 保持原有样式不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        header {
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #d4af37, #f8f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        .selector-container {
+            background: rgba(10, 10, 10, 0.7);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+        }
+
+        .selector-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            color: #d4af37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .scroll-container {
+            height: 250px; /* 5行 × 50px */
+            overflow: hidden;
+            position: relative;
+            margin: 20px 0;
+            border: 2px solid #d4af37;
+            border-radius: 10px;
+            background: rgba(20, 20, 30, 0.8);
+        }
+
+        .scroll-list {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .scroll-item {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .scroll-item-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar-placeholder {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* 选中项高亮效果 */
+        .scroll-item.selected {
+            background: rgba(212, 175, 55, 0.5);
+            color: #ffffff;
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.8);
+            transform: scale(1.05);
+            z-index: 5;
+        }
+
+        /* 添加中心参考线（调试用，实际使用可删除） */
+        .scroll-container::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            transform: translateY(-50%);
+            pointer-events: none;
+            border-top: 1px dashed rgba(212, 175, 55, 0.3);
+            border-bottom: 1px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        .selector-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            background: linear-gradient(to bottom, #c41e3a, #8b0000);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(to bottom, #d41e3a, #9b0000);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .control-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-section {
+            background: rgba(10, 10, 10, 0.7);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px auto;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            color: #d4af37;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .result-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        .highlight {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .instructions {
+            background: rgba(30, 30, 30, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .instructions h3 {
+            color: #d4af37;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .selector-title {
+                font-size: 1.5rem;
+            }
+            
+            .scroll-item {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>边狱公司 - 今天蛋筒什么？</h1>
+            <p class="subtitle">一级选择：12名罪人 | 二级选择：对应罪人的专属人格</p>
+        </header>
+
+        <div class="selector-container">
+            <!-- 一级选择器：罪人选择 -->
+            <div class="selector-section">
+                <h2 class="selector-title">
+                    <i class="fas fa-user-tag"></i> 一级选择 - 12名罪人
+                </h2>
+                <div class="scroll-container">
+                    <div id="sinner-scroll" class="scroll-list"></div>
+                </div>
+                <div class="selector-controls">
+                    <button id="sinner-start-btn" class="control-btn">
+                        <i class="fas fa-play"></i> 开始滚动
+                    </button>
+                    <button id="sinner-stop-btn" class="control-btn" disabled>
+                        <i class="fas fa-stop"></i> 停止选择
+                    </button>
+                </div>
+            </div>
+
+            <!-- 二级选择器：人格选择 -->
+            <div class="selector-section" style="margin-top: 40px;">
+                <h2 class="selector-title">
+                    <i class="fas fa-mask"></i> 二级选择 - 罪人人格
+                </h2>
+                <div class="scroll-container">
+                    <div id="persona-scroll" class="scroll-list"></div>
+                </div>
+                <div class="selector-controls">
+                    <button id="persona-start-btn" class="control-btn" disabled>
+                        <i class="fas fa-play"></i> 开始滚动
+                    </button>
+                    <button id="persona-stop-btn" class="control-btn" disabled>
+                        <i class="fas fa-stop"></i> 停止选择
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果显示区域 -->
+        <div class="result-section">
+            <h3 class="result-title">
+                <i class="fas fa-trophy"></i> 选择结果
+            </h3>
+            <div class="result-content">
+                <p><span class="highlight">当前选中罪人：</span><span id="selected-sinner">未选择</span></p>
+                <p><span class="highlight">当前选中人格：</span><span id="selected-persona">未选择</span></p>
+            </div>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <ul>
+                <li>游戏副本数据基于边狱公司最新资料整理</li>
+                <li>点击"开始滚动"按钮启动滚动选择</li>
+                <li>点击"停止选择"按钮确定当前选项</li>
+                <li>一级选择完成后，二级选择器将自动解锁</li>
+                <li>每次选择均为随机，确保公平性</li>
+                <li>支持手机、平板、电脑等多种设备访问</li>
+                <li>欢迎反馈、提建议、报告Bug</li>
+                <li>084 QQ交流群：313198040</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 罪人及人格数据 (预留头像字段)
+        const sinnerData = [
+            {
+                id: 1,
+                name: "李箱 (Yi Sang)",
+                avatar: "",
+                color: '#9370DB',
+                personalities: [
+                    "W公司3级清扫人员", "Seven协会南部6科", "N公司E.G.O:凶弹", 
+                    "LCE_E.G.O:提灯", "LCB罪人", "Dieci协会南部4科", 
+                    "绽放E.G.O:山茶花", "裴廓德号大副", "脑叶公司E.G.O:庄严哀悼", 
+                    "六协会南部3科", "臼齿事务所收尾人", "剑契组杀手", 
+                    "环指点彩派学徒", "黑兽-午魁首"
+                ]
+            },
+            {
+                id: 2,
+                name: "浮士德 (Faust)",
+                avatar: "",
+                color: '#4169E1',
+                personalities: [
+                    "し协会东部3科", "Zwei协会南部4科", "W公司2级清扫人员", 
+                    "Seven协会南部4科", "LCE_E.G.O:红艳煞", "LCB罪人", 
+                    "执柄者", "脑叶公司E.G.O:悔恨", "脑叶公司幸存者", 
+                    "剑契组杀手", "呼啸山庄管家", "黑兽-卯魁首", 
+                    "多裂纹事务所代表"
+                ]
+            },
+            {
+                id: 3,
+                name: "堂吉诃德 (Don Quixote)",
+                avatar: "",
+                color: '#FF6347',
+                personalities: [
+                    "し协会南部5科科长", "W公司3级清扫人员", "T公司3级征收人员", 
+                    "N公司中锤", "LCB罪人", "Cinq协会南部5科科长", 
+                    "Cinq协会东部3科", "中指幼妹", "脑叶公司E.G.O:以爱与憎之名", 
+                    "脑叶公司E.G.O:提灯", "拉·曼却领总督", "剑契组杀手", 
+                    "黑兽-未"
+                ]
+            },
+            {
+                id: 4,
+                name: "良秀 (Ryoshu/柳永)",
+                avatar: "",
+                color: '#DC143C',
+                personalities: [
+                    "W公司3级清扫人员", "Seven协会南部6科", "N公司E.G.O:轻蔑，敬畏", 
+                    "LCCB系长", "LCB罪人", "脑叶公司E.G.O:赤瞳·忏悔", 
+                    "六协会南部4科", "良·派厨师长", "鸿园的流浪武者", 
+                    "黑云会若众", "黑兽-卯", "埃德加家族首席管家", 
+                    "20区圣愚"
+                ]
+            },
+            {
+                id: 5,
+                name: "默尔索 (Meursault)",
+                avatar: "",
+                color: '#708090',
+                personalities: [
+                    "W公司2级清扫人员", "R公司第四集团军犀牛队", "N公司大锤", 
+                    "LCB罪人", "Dieci协会南部4科科长", "Cinq协会西部3科", 
+                    "中指幼弟", "死兔帮老大", "拇指东部指挥官IIII", 
+                    "玫瑰扳手工坊收尾人", "六协会南部6科", "拉·曼却领王子", 
+                    "剑契组头领"
+                ]
+            },
+            {
+                id: 6,
+                name: "鸿璐 (Hong Lu)",
+                avatar: "",
+                color: '#228B22',
+                personalities: [
+                    "W公司2级清扫人员", "R公司第四集团军驯鹿队", "LCB罪人", 
+                    "K公司3级摘除人员", "Dieci协会南部4科", "六协会南部5科", 
+                    "猎牙事务所收尾人", "句点事务所代表", "鸿园的君主", 
+                    "黑云会若众", "豆豆帮帮主", "吊钩事务所收尾人", 
+                    "20区圣愚"
+                ]
+            },
+            {
+                id: 7,
+                name: "希斯克利夫 (Heathcliff)",
+                avatar: "",
+                color: '#FF4500',
+                personalities: [
+                      "し协会南部5科", "W公司4级清扫人员-CCA", "Seven协会南部4科", 
+                    "R公司第四集团军兔子队", "Öufi协会南部3科", "N公司小锤", 
+                    "LCB罪人", "裴廓德号鱼叉手", "脑叶公司E.G.O:狐雨", 
+                    "狂猎", "句点事务所收尾人", "黑云会若众", 
+                    "黑兽-酉魁首", "多裂纹事务所收尾人"
+                ]
+            },
+            {
+                id: 8,
+                name: "以实玛利 (Ishmael)",
+                avatar: "",
+                color: '#191970',
+                personalities: [
+                   "し协会南部5科", "Zwei协会西部3科", "R公司第四集团军驯鹿队", 
+                    "LCCB系长", "LCB罪人", "裴廓德号船长", 
+                    "脑叶公司E.G.O:荡漾", "六协会南部4科", "臼齿修船厂收尾人", 
+                    "家主候选人", "黑云会副会长", "定事务所代表", 
+                    "埃德加家族管家"
+                ]
+            },
+            {
+                id: 9,
+                name: "罗佳 (Rodion)",
+                avatar: "",
+                color: '#FF1493',
+                personalities: [
+                 "Девять协会北部3科", "Zwei协会南部5科", "T公司2级征收人员", 
+                    "N公司中锤", "LCCB系长", "LCB罪人", 
+                    "Dieci协会南部4科", "脑叶公司E.G.O:泪锋之剑", "玫瑰扳手工坊代表", 
+                    "六协会南部4科科长", "拉·曼却领公主", "黑云会若众", 
+                    "黑兽-巳"
+                ]
+            },
+            {
+                id: 10,
+                name: "辛克莱 (Sinclair)",
+                avatar: "",
+                color: '#FFD700',
+                personalities: [
+                  "Девять协会北部3科", "Zwei协会西部3科", "Zwei协会南部6科", 
+                    "LCB罪人", "Cinq协会南部4科科长", "准执柄者", 
+                    "中指幼弟", "脑叶公司E.G.O:朱符", "拇指东部士兵II", 
+                    "流浪乐队头目", "黎明事务所收尾人", "臼齿修船厂收尾人", 
+                    "剑契组杀手", "黑兽-酉"
+                ]
+            },
+            {
+                id: 11,
+                name: "格里高尔 (Gregor)",
+                avatar: "",
+                color: '#8B4513',
+                personalities: [
+                   "Zwei协会南部4科", "LCB罪人", "G公司科长代理", 
+                    "夜锥组队长", "炎拳事务所幸存者", "双钩海盗团大副", 
+                    "玫瑰扳手工坊收尾人", "六协会南部6科", "良·派帮厨", 
+                    "拉·曼却领神父", "黑云会副会长", "黑兽-巳", 
+                    "埃德加家族继承人"
+                ]
+            },
+            {
+                id: 12,
+                name: "奥提斯 (Outis)",
+                avatar: "",
+                color: '#008080',
+                personalities: [
+                    "W公司3级清扫组长", "T公司3级强制征收人员", "Seven协会南部6科科长", 
+                    "LCB罪人", "G公司部长", "Cinq协会南部4科", 
+                    "脑叶公司E.G.O:魔弹", "拉·曼却领理发师", "臼齿事务所收尾人", 
+                    "剑契组杀手", "环指点彩派学徒", "呼啸山庄首席管家", 
+                    "黑兽-卯"
+                ]
+            }
+        ];
+
+        // 获取DOM元素
+        const sinnerScroll = document.getElementById('sinner-scroll');
+        const personaScroll = document.getElementById('persona-scroll');
+        const sinnerStartBtn = document.getElementById('sinner-start-btn');
+        const sinnerStopBtn = document.getElementById('sinner-stop-btn');
+        const personaStartBtn = document.getElementById('persona-start-btn');
+        const personaStopBtn = document.getElementById('persona-stop-btn');
+        const selectedSinnerEl = document.getElementById('selected-sinner');
+        const selectedPersonaEl = document.getElementById('selected-persona');
+
+        // 滚动状态
+        let sinnerScrollInterval = null;
+        let personaScrollInterval = null;
+        let currentSelectedSinner = null;
+        let sinnerItems = [];
+        let personaItems = [];
+        let sinnerOffset = 0;
+        let personaOffset = 0;
+        let isSinnerScrolling = false;
+        let isPersonaScrolling = false;
+        const itemHeight = 50; // 每个项目高度
+        const visibleItems = 5; // 可视区域显示5行
+        const centerIndex = Math.floor(visibleItems / 2); // 中心行索引（第3行）
+        const centerOffset = centerIndex * itemHeight; // 中心行偏移量
+
+        // 创建滚动列表
+        function createSinnerScrollList(items) {
+            sinnerScroll.innerHTML = '';
+            sinnerItems = items;
+            
+            // 创建足够多的项目以实现平滑滚动效果
+            const itemCount = items.length * 10;
+            for (let i = 0; i < itemCount; i++) {
+                const item = document.createElement('div');
+                item.className = 'scroll-item';
+                item.dataset.originalIndex = i % items.length; // 存储原始索引
+                
+                const content = document.createElement('div');
+                content.className = 'scroll-item-content';
+                
+                const avatarPlaceholder = document.createElement('div');
+                avatarPlaceholder.className = 'avatar-placeholder';
+                avatarPlaceholder.textContent = '?';
+                content.appendChild(avatarPlaceholder);
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = items[i % items.length];
+                content.appendChild(textSpan);
+                
+                item.appendChild(content);
+                sinnerScroll.appendChild(item);
+            }
+        }
+
+        // 创建人格滚动列表
+        function createPersonaScrollList(items) {
+            personaScroll.innerHTML = '';
+            personaItems = items;
+            
+            const itemCount = items.length * 10;
+            for (let i = 0; i < itemCount; i++) {
+                const item = document.createElement('div');
+                item.className = 'scroll-item';
+                item.dataset.originalIndex = i % items.length;
+                
+                const content = document.createElement('div');
+                content.className = 'scroll-item-content';
+                
+                const avatarPlaceholder = document.createElement('div');
+                avatarPlaceholder.className = 'avatar-placeholder';
+                avatarPlaceholder.textContent = '?';
+                content.appendChild(avatarPlaceholder);
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = items[i % items.length];
+                content.appendChild(textSpan);
+                
+                item.appendChild(content);
+                personaScroll.appendChild(item);
+            }
+        }
+
+        // 开始罪人滚动
+        function startSinnerScroll() {
+            if (sinnerScrollInterval) return;
+            
+            sinnerStartBtn.disabled = true;
+            sinnerStopBtn.disabled = false;
+            isSinnerScrolling = true;
+            
+            // 清除之前选中的高亮
+            clearHighlight(sinnerScroll);
+            
+            // 快速滚动
+            const speed = 150;
+            sinnerScroll.style.transition = 'transform 0.05s linear';
+            
+            sinnerScrollInterval = setInterval(() => {
+                sinnerOffset += speed;
+                sinnerScroll.style.transform = `translateY(-${sinnerOffset}px)`;
+                
+                // 循环重置逻辑
+                const totalHeight = sinnerItems.length * itemHeight * 5;
+                if (sinnerOffset > totalHeight) {
+                    sinnerOffset = sinnerOffset % totalHeight;
+                    sinnerScroll.style.transition = 'none';
+                    sinnerScroll.style.transform = `translateY(-${sinnerOffset}px)`;
+                    setTimeout(() => {
+                        sinnerScroll.style.transition = 'transform 0.05s linear';
+                    }, 10);
+                }
+            }, 10);
+        }
+
+        // 停止罪人滚动并定位到中心
+        function stopSinnerScroll() {
+            if (!sinnerScrollInterval) return;
+            
+            clearInterval(sinnerScrollInterval);
+            sinnerScrollInterval = null;
+            isSinnerScrolling = false;
+            
+            // 随机选择一个罪人
+            const randomIndex = Math.floor(Math.random() * sinnerData.length);
+            currentSelectedSinner = sinnerData[randomIndex];
+            selectedSinnerEl.textContent = currentSelectedSinner.name;
+            selectedPersonaEl.textContent = "未选择";
+            
+            // 计算目标偏移量，确保选中项显示在中心行
+            const loopCount = 5; // 使用第5次循环的项目进行定位，确保前后都有足够项目
+            const targetOffset = (randomIndex + loopCount * sinnerItems.length) * itemHeight - centerOffset;
+            
+            // 平滑过渡到目标位置
+            sinnerScroll.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            sinnerScroll.style.transform = `translateY(-${targetOffset}px)`;
+            
+            // 更新当前偏移量
+            sinnerOffset = targetOffset;
+            
+            // 高亮显示选中的项目
+            setTimeout(() => {
+                highlightSelectedItem(sinnerScroll, randomIndex);
+            }, 800); // 等待过渡动画完成
+            
+            sinnerStartBtn.disabled = false;
+            sinnerStopBtn.disabled = true;
+            
+            // 启用人格选择器
+            personaStartBtn.disabled = false;
+            
+            // 创建对应罪人的人格列表
+            createPersonaScrollList(currentSelectedSinner.personalities);
+        }
+
+        // 开始人格滚动
+        function startPersonaScroll() {
+            if (personaScrollInterval || !currentSelectedSinner) return;
+            
+            personaStartBtn.disabled = true;
+            personaStopBtn.disabled = false;
+            isPersonaScrolling = true;
+            
+            // 清除之前选中的高亮
+            clearHighlight(personaScroll);
+            
+            // 快速滚动
+            const speed = 150;
+            personaScroll.style.transition = 'transform 0.05s linear';
+            
+            personaScrollInterval = setInterval(() => {
+                personaOffset += speed;
+                personaScroll.style.transform = `translateY(-${personaOffset}px)`;
+                
+                // 循环重置逻辑
+                const totalHeight = personaItems.length * itemHeight * 5;
+                if (personaOffset > totalHeight) {
+                    personaOffset = personaOffset % totalHeight;
+                    personaScroll.style.transition = 'none';
+                    personaScroll.style.transform = `translateY(-${personaOffset}px)`;
+                    setTimeout(() => {
+                        personaScroll.style.transition = 'transform 0.05s linear';
+                    }, 10);
+                }
+            }, 10);
+        }
+
+        // 停止人格滚动并定位到中心
+        function stopPersonaScroll() {
+            if (!personaScrollInterval || !currentSelectedSinner) return;
+            
+            clearInterval(personaScrollInterval);
+            personaScrollInterval = null;
+            isPersonaScrolling = false;
+            
+            // 随机选择一个人格
+            const randomIndex = Math.floor(Math.random() * currentSelectedSinner.personalities.length);
+            const selectedPersona = currentSelectedSinner.personalities[randomIndex];
+            selectedPersonaEl.textContent = selectedPersona;
+            
+            // 计算目标偏移量，确保选中项显示在中心行
+            const loopCount = 5; // 使用第5次循环的项目进行定位
+            const targetOffset = (randomIndex + loopCount * personaItems.length) * itemHeight - centerOffset;
+            
+            // 平滑过渡到目标位置
+            personaScroll.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            personaScroll.style.transform = `translateY(-${targetOffset}px)`;
+            
+            // 更新当前偏移量
+            personaOffset = targetOffset;
+            
+            // 高亮显示选中的项目
+            setTimeout(() => {
+                highlightSelectedItem(personaScroll, randomIndex);
+            }, 800); // 等待过渡动画完成
+            
+            personaStartBtn.disabled = false;
+            personaStopBtn.disabled = true;
+        }
+
+        // 清除高亮显示
+        function clearHighlight(scrollContainer) {
+            const items = scrollContainer.querySelectorAll('.scroll-item');
+            items.forEach(item => {
+                item.classList.remove('selected');
+            });
+        }
+
+        // 高亮显示选中项
+        function highlightSelectedItem(scrollContainer, index) {
+            clearHighlight(scrollContainer);
+            const items = scrollContainer.querySelectorAll('.scroll-item');
+            items.forEach(item => {
+                if (parseInt(item.dataset.originalIndex) === index) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+
+        // 初始化
+        function init() {
+            // 创建罪人列表
+            const sinnerNames = sinnerData.map(sinner => sinner.name);
+            createSinnerScrollList(sinnerNames);
+            
+            // 创建空的人格列表
+            createPersonaScrollList(['请先选择罪人']);
+            
+            // 绑定事件
+            sinnerStartBtn.addEventListener('click', startSinnerScroll);
+            sinnerStopBtn.addEventListener('click', stopSinnerScroll);
+            personaStartBtn.addEventListener('click', startPersonaScroll);
+            personaStopBtn.addEventListener('click', stopPersonaScroll);
+        }
+
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
