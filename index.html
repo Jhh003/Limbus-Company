@@ -215,6 +215,55 @@
             line-height: 1.5;
         }
 
+        /* 新增筛选样式 */
+        .filter-controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .sinner-checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .sinner-checkbox-label:hover {
+            background: rgba(212, 175, 55, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .sinner-checkbox-label input {
+            margin-right: 8px;
+        }
+
+        .filter-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 8px;
+            object-fit: cover;
+        }
+
+        .filter-avatar-placeholder {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            margin-right: 8px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -242,6 +291,25 @@
         </header>
 
         <div class="selector-container">
+            <!-- 筛选设置 -->
+            <div class="selector-section" style="margin-bottom: 40px;">
+                <h2 class="selector-title">
+                    <i class="fas fa-filter"></i> 筛选设置
+                </h2>
+                <div class="filter-controls">
+                    <button id="select-all-btn" class="control-btn" style="margin: 10px 5px; padding: 8px 15px; font-size: 0.9rem;">
+                        全选
+                    </button>
+                    <button id="deselect-all-btn" class="control-btn" style="margin: 10px 5px; padding: 8px 15px; font-size: 0.9rem;">
+                        全不选
+                    </button>
+                    <button id="invert-selection-btn" class="control-btn" style="margin: 10px 5px; padding: 8px 15px; font-size: 0.9rem;">
+                        反选
+                    </button>
+                </div>
+                <div id="sinner-filter" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 20px;"></div>
+            </div>
+
             <!-- 一级选择器：罪人选择 -->
             <div class="selector-section">
                 <h2 class="selector-title">
@@ -294,7 +362,8 @@
         <div class="instructions">
             <h3>使用说明</h3>
             <ul>
-                <li>数据、图片来源于Limbus Company 中文维基</li>
+                <li>数据基于Limbus Company 中文维基 最新资料整理</li>
+                <li>在筛选设置中选择要参与随机的罪人</li>
                 <li>点击"开始滚动"按钮启动滚动选择</li>
                 <li>点击"停止选择"按钮确定当前选项</li>
                 <li>一级选择完成后，二级选择器将自动解锁</li>
@@ -492,6 +561,9 @@
         const centerIndex = Math.floor(visibleItems / 2); // 中心行索引（第3行）
         const centerOffset = centerIndex * itemHeight; // 中心行偏移量
 
+        // 新增变量：筛选后的罪人数据
+        let filteredSinnerData = [...sinnerData]; // 默认包含所有罪人
+
         // 创建滚动列表
         function createSinnerScrollList(items) {
             sinnerScroll.innerHTML = '';
@@ -603,15 +675,25 @@
             sinnerScrollInterval = null;
             isSinnerScrolling = false;
             
-            // 随机选择一个罪人
-            const randomIndex = Math.floor(Math.random() * sinnerData.length);
-            currentSelectedSinner = sinnerData[randomIndex];
+            // 从筛选后的罪人中随机选择
+            if (filteredSinnerData.length === 0) {
+                alert('请至少选择一个罪人！');
+                sinnerStartBtn.disabled = false;
+                sinnerStopBtn.disabled = true;
+                return;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * filteredSinnerData.length);
+            currentSelectedSinner = filteredSinnerData[randomIndex];
             selectedSinnerEl.textContent = currentSelectedSinner.name;
             selectedPersonaEl.textContent = "未选择";
             
+            // 计算在原始sinnerData中的索引用于定位
+            const originalIndex = sinnerData.findIndex(s => s.id === currentSelectedSinner.id);
+            
             // 计算目标偏移量，确保选中项显示在中心行
             const loopCount = 5; // 使用第5次循环的项目进行定位，确保前后都有足够项目
-            const targetOffset = (randomIndex + loopCount * sinnerItems.length) * itemHeight - centerOffset;
+            const targetOffset = (originalIndex + loopCount * sinnerItems.length) * itemHeight - centerOffset;
             
             // 平滑过渡到目标位置
             sinnerScroll.style.transition = 'transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -622,7 +704,7 @@
             
             // 高亮显示选中的项目
             setTimeout(() => {
-                highlightSelectedItem(sinnerScroll, randomIndex);
+                highlightSelectedItem(sinnerScroll, originalIndex);
             }, 800); // 等待过渡动画完成
             
             sinnerStartBtn.disabled = false;
@@ -719,8 +801,86 @@
             });
         }
 
+        // 创建罪人筛选复选框
+        function createSinnerFilter() {
+            const filterContainer = document.getElementById('sinner-filter');
+            filterContainer.innerHTML = '';
+            
+            sinnerData.forEach(sinner => {
+                const label = document.createElement('label');
+                label.className = 'sinner-checkbox-label';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = sinner.id;
+                checkbox.checked = true; // 默认全选
+                checkbox.addEventListener('change', updateFilteredSinnerData);
+                
+                // 创建头像元素
+                if (sinner.avatar) {
+                    const avatarImg = document.createElement('img');
+                    avatarImg.className = 'filter-avatar';
+                    avatarImg.src = sinner.avatar;
+                    avatarImg.alt = sinner.name;
+                    avatarImg.onerror = function() {
+                        // 如果图片加载失败，显示占位符
+                        this.parentNode.replaceChild(createAvatarPlaceholder(sinner), this);
+                    };
+                    label.appendChild(checkbox);
+                    label.appendChild(avatarImg);
+                } else {
+                    const placeholder = createAvatarPlaceholder(sinner);
+                    label.appendChild(checkbox);
+                    label.appendChild(placeholder);
+                }
+                
+                label.appendChild(document.createTextNode(sinner.name));
+                
+                filterContainer.appendChild(label);
+            });
+        }
+
+        // 辅助函数：创建头像占位符
+        function createAvatarPlaceholder(sinner) {
+            const placeholder = document.createElement('span');
+            placeholder.className = 'filter-avatar-placeholder';
+            placeholder.style.backgroundColor = sinner.color;
+            placeholder.textContent = '?';
+            return placeholder;
+        }
+
+        // 更新筛选后的罪人数据
+        function updateFilteredSinnerData() {
+            const checkboxes = document.querySelectorAll('#sinner-filter input[type="checkbox"]');
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => parseInt(cb.value));
+            
+            filteredSinnerData = sinnerData.filter(sinner => selectedIds.includes(sinner.id));
+            
+            // 如果没有选中任何罪人，禁用开始按钮
+            sinnerStartBtn.disabled = selectedIds.length === 0;
+        }
+
+        // 全选/全不选
+        function toggleAllCheckboxes(selectAll) {
+            const checkboxes = document.querySelectorAll('#sinner-filter input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = selectAll);
+            updateFilteredSinnerData();
+        }
+
+        // 反选
+        function invertSelection() {
+            const checkboxes = document.querySelectorAll('#sinner-filter input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = !cb.checked);
+            updateFilteredSinnerData();
+        }
+
         // 初始化
         function init() {
+            // 创建筛选复选框
+            createSinnerFilter();
+            
             // 创建罪人列表
             const sinnerNames = sinnerData.map(sinner => sinner.name);
             createSinnerScrollList(sinnerNames);
@@ -733,11 +893,15 @@
             sinnerStopBtn.addEventListener('click', stopSinnerScroll);
             personaStartBtn.addEventListener('click', startPersonaScroll);
             personaStopBtn.addEventListener('click', stopPersonaScroll);
+            
+            // 绑定筛选控制按钮事件
+            document.getElementById('select-all-btn').addEventListener('click', () => toggleAllCheckboxes(true));
+            document.getElementById('deselect-all-btn').addEventListener('click', () => toggleAllCheckboxes(false));
+            document.getElementById('invert-selection-btn').addEventListener('click', invertSelection);
         }
 
         // 页面加载完成后初始化
         window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-
 </html>
