@@ -352,8 +352,6 @@
             background: linear-gradient(to bottom, #c41e3a, #8b0000);
         }
 
-
-
         /* 分页样式 */
         .pagination {
             display: flex;
@@ -451,8 +449,6 @@
             }
         }
     </style>
-    <!-- 引入存储 SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.17.0/dist/av-min.js"></script>
     <script>
      // 倒计时功能：使用一次性时间同步 + performance.now() 偏移维持精确计时
  
@@ -612,7 +608,6 @@
         <div class="navigation-buttons">
             <button id="main-page-btn" class="nav-btn active">主选择器</button>
             <button id="settings-page-btn" class="nav-btn">筛选设置</button>
-            <button id="leaderboard-page-btn" class="nav-btn">排行榜</button>
         </div>
 
         <!-- 主选择器页面 -->
@@ -639,8 +634,8 @@
                 <!-- 二级选择器：人格选择 -->
                 <div class="selector-section" style="margin-top: 40px;">
                     <h2 class="selector-title">
-                    <i class="fas fa-mask"></i> 二级选择 - 罪人人格
-                </h2>
+                        <i class="fas fa-mask"></i> 二级选择 - 罪人人格
+                    </h2>
                     <div class="scroll-container" id="persona-scroll-container">
                         <div id="persona-scroll" class="scroll-list"></div>
                     </div>
@@ -702,8 +697,6 @@
                 </div>
             </div>
         </div>
-
-
 
         <!-- 使用说明 -->
         <div class="instructions">
@@ -997,10 +990,8 @@
         // 页面导航元素
         const mainPageBtn = document.getElementById('main-page-btn');
         const settingsPageBtn = document.getElementById('settings-page-btn');
-        const leaderboardPageBtn = document.getElementById('leaderboard-page-btn');
         const mainSelectorPage = document.getElementById('main-selector-page');
         const settingsPage = document.getElementById('settings-page');
-        const leaderboardPage = document.getElementById('leaderboard-page');
 
         // 滚动状态
         let sinnerScrollInterval = null;
@@ -1013,12 +1004,6 @@
         let isSinnerScrolling = false;
         let isPersonaScrolling = false;
         const itemHeight = 50; // 每个项目高度
-        
-        // 计时器相关变量
-        let timerInterval = null;
-        let startTime = 0;
-        let elapsedTime = 0;
-        let timerRunning = false;
 
         // 新增变量：筛选后的罪人数据
         let filteredSinnerData = [...sinnerData]; // 默认包含所有罪人
@@ -1029,55 +1014,6 @@
         // 新增变量：存储原始筛选状态，用于检测是否有更改
         let originalFilteredSinnerData = [];
         let originalFilteredPersonalityData = {};
-        
-        // 计时器功能函数
-        function startTimer() {
-            if (timerRunning) return;
-            
-            startTime = Date.now() - elapsedTime;
-            timerRunning = true;
-            
-            timerInterval = setInterval(() => {
-                elapsedTime = Date.now() - startTime;
-                updateTimerDisplay();
-            }, 10); // 更新频率为10ms，确保秒数精确到小数点后两位
-        }
-        
-        function stopTimer() {
-            if (!timerRunning) return;
-            
-            clearInterval(timerInterval);
-            timerInterval = null;
-            timerRunning = false;
-        }
-        
-        function resetTimer() {
-            stopTimer();
-            elapsedTime = 0;
-            updateTimerDisplay();
-        }
-        
-        function updateTimerDisplay() {
-            // 获取两个可能的计时器显示元素
-            const timerDisplay = document.getElementById('timer-display');
-            const timerControlDisplay = document.getElementById('timer-control-display');
-            
-            const minutes = Math.floor(elapsedTime / (1000 * 60));
-            const seconds = Math.floor((elapsedTime % (1000 * 60)) / 1000);
-            const milliseconds = Math.floor((elapsedTime % 1000) / 10);
-            
-            const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
-            
-            // 更新传统计时器显示（如果存在）
-            if (timerDisplay) {
-                timerDisplay.textContent = timeStr;
-            }
-            
-            // 更新计时控制界面的显示（如果存在）
-            if (timerControlDisplay) {
-                timerControlDisplay.textContent = timeStr;
-            }
-        }
         let hasUnsavedChanges = false;
 
         // 安全随机整数生成函数 [0, max)
@@ -1119,17 +1055,9 @@
         settingsPageBtn.addEventListener('click', () => {
             mainSelectorPage.style.display = 'none';
             settingsPage.style.display = 'block';
-            leaderboardPage.style.display = 'none';
             settingsPageBtn.classList.add('active');
             mainPageBtn.classList.remove('active');
-            leaderboardPageBtn.classList.remove('active');
             createPersonalitySettings();
-        });
-
-        // 排行榜页面事件监听器 - 链接到外部rank.html页面
-        leaderboardPageBtn.addEventListener('click', () => {
-            // 打开外部排行榜页面
-            window.open('rank.html', '_blank');
         });
 
         // 创建滚动列表
@@ -1571,10 +1499,6 @@
             personaStopBtn.disabled = false;
             isPersonaScrolling = true;
             
-            // 重置并开始计时
-            resetTimer();
-            startTimer();
-            
             // 清除之前选中的高亮
             clearHighlight(personaScroll);
             
@@ -1675,16 +1599,6 @@
             // 高亮显示选中的项目
             setTimeout(() => {
                 highlightSelectedItem(personaScroll, randomIndex);
-                
-                // 停止当前可能正在运行的计时器
-                resetTimer();
-                
-                // 显示弹窗，询问是否开始计时
-                const startTiming = confirm('是否开始计时？');
-                if (startTiming) {
-                    // 创建计时控制界面
-                    createTimerControlInterface();
-                }
             }, 800); // 等待过渡动画完成
             
             personaStartBtn.disabled = false;
@@ -2330,361 +2244,8 @@
             document.querySelector('#settings-page .settings-section:last-child').appendChild(applyBtn);
         }
 
-
-        
-        // 创建计时控制界面
-        function createTimerControlInterface() {
-            // 检查是否已经存在计时控制界面
-            let timerControl = document.getElementById('timer-control-interface');
-            if (timerControl) {
-                // 如果存在，显示它
-                timerControl.style.display = 'block';
-                return;
-            }
-            
-            // 创建计时控制界面
-            timerControl = document.createElement('div');
-            timerControl.id = 'timer-control-interface';
-            timerControl.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: rgba(20, 20, 40, 0.95);
-                border: 2px solid #FFD700;
-                border-radius: 10px;
-                padding: 20px;
-                z-index: 1000;
-                text-align: center;
-                box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-            `;
-            
-            // 创建标题
-            const title = document.createElement('h3');
-            title.textContent = '此次单通用时';
-            title.style.color = '#FFD700';
-            title.style.marginBottom = '20px';
-            timerControl.appendChild(title);
-            
-            // 创建计时器显示
-            const timerDisplay = document.createElement('div');
-            timerDisplay.id = 'timer-control-display';
-            timerDisplay.style.cssText = `
-                font-size: 48px;
-                font-weight: bold;
-                color: #FFD700;
-                margin-bottom: 20px;
-                text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-            `;
-            timerDisplay.textContent = '00:00.00';
-            timerControl.appendChild(timerDisplay);
-            
-            // 创建按钮容器
-            const buttonContainer = document.createElement('div');
-            buttonContainer.style.cssText = `
-                display: flex;
-                gap: 15px;
-                justify-content: center;
-                margin-bottom: 15px;
-            `;
-            timerControl.appendChild(buttonContainer);
-            
-            // 创建开始按钮
-            const startButton = document.createElement('button');
-            startButton.textContent = '开始计时';
-            startButton.id = 'timer-control-start';
-            startButton.style.cssText = `
-                padding: 10px 20px;
-                font-size: 16px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-weight: bold;
-            `;
-            startButton.onclick = () => {
-                startTimer();
-                updateControlTimerDisplay();
-                startButton.disabled = true;
-                stopButton.disabled = false;
-            };
-            buttonContainer.appendChild(startButton);
-            
-            // 创建停止按钮
-            const stopButton = document.createElement('button');
-            stopButton.textContent = '停止计时';
-            stopButton.id = 'timer-control-stop';
-            stopButton.style.cssText = `
-                padding: 10px 20px;
-                font-size: 16px;
-                background-color: #f44336;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                font-weight: bold;
-            `;
-            stopButton.disabled = true;
-            stopButton.onclick = () => {
-                stopTimer();
-                startButton.disabled = false;
-                stopButton.disabled = true;
-                
-                // 询问用户是否记录时间
-                if (elapsedTime > 0) {
-                    const timeDisplay = document.getElementById('timer-control-display').textContent;
-                    if (confirm(`此次时间：${timeDisplay}\n是否上传到排行榜？`)) {
-                        recordTimeToLeaderboard();
-                    } else {
-                        alert('时间未上传到排行榜');
-                    }
-                }
-            };
-            buttonContainer.appendChild(stopButton);
-            
-            // 创建关闭按钮
-            const closeButton = document.createElement('button');
-            closeButton.textContent = '关闭';
-            closeButton.style.cssText = `
-                padding: 5px 15px;
-                font-size: 14px;
-                background-color: #555;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-            `;
-            closeButton.onclick = () => {
-                // 停止计时
-                stopTimer();
-                // 隐藏计时控制界面
-                timerControl.style.display = 'none';
-            };
-            timerControl.appendChild(closeButton);
-            
-            // 添加到文档中
-            document.body.appendChild(timerControl);
-            
-            // 更新计时器显示
-            function updateControlTimerDisplay() {
-                if (!timerRunning) return;
-                
-                // 直接调用updateTimerDisplay函数来更新计时显示
-                updateTimerDisplay();
-                
-                requestAnimationFrame(updateControlTimerDisplay);
-            }
-        }
-        
-        // 格式化时间显示
-        function formatTime(time) {
-            if (!time || time === 0) return '00:00.00';
-            
-            const minutes = Math.floor(time / 60000);
-            const seconds = Math.floor((time % 60000) / 1000);
-            const milliseconds = Math.floor((time % 1000) / 10);
-            
-            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
-        }
-        
-
-        
         // 页面加载完成后初始化
         window.addEventListener('DOMContentLoaded', init);
     </script>
-    
-    <!-- LeanCloud SDK -->
-    <script src="//code.bdstatic.com/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
-    
-    <script>
-        // LeanCloud配置
-        const APP_ID = "23WBNLRoympdUyZdwnxzSI0i-MdYXbMMI";
-        const APP_KEY = "wtSe16WHzyp8TIxoKZE2msvo";
-        const SERVER_URL = "https://23wbnlro.lc-cn-n1-shared.com";
-        
-        // 初始化LeanCloud
-        function initLeanCloud() {
-            return new Promise((resolve, reject) => {
-                // 检查是否已经初始化
-                if (typeof AV !== 'undefined' && AV.applicationId) {
-                    console.log('LeanCloud已初始化');
-                    resolve();
-                    return;
-                }
-                
-                // 检查是否已加载SDK
-                if (typeof AV === 'undefined') {
-                    console.error('LeanCloud SDK未加载');
-                    reject(new Error('LeanCloud SDK未加载'));
-                    return;
-                }
-                
-                try {
-                    AV.init({
-                        appId: APP_ID,
-                        appKey: APP_KEY,
-                        serverURL: SERVER_URL
-                    });
-                    // LeanCloud对象解构
-                    window.Query = AV.Query;
-                    window.User = AV.User;
-                    console.log('LeanCloud初始化成功');
-                    resolve();
-                } catch (error) {
-                    console.error('LeanCloud初始化失败:', error);
-                    reject(error);
-                }
-            });
-        }
-        
-        // 记录时间到排行榜
-        async function recordTimeToLeaderboard() {
-            try {
-                // 初始化LeanCloud
-                await initLeanCloud();
-                
-                // 获取当前用户
-                let currentUser = AV.User.current();
-                
-                // 如果用户未登录，提供登录方式选择
-                if (!currentUser) {
-                    console.log('用户未登录，提供登录方式选择...');
-                    
-                    // 显示登录方式选择弹窗
-                    const loginMethod = prompt('请选择登录方式：\n1. 匿名登录\n2. 用户名+密码注册/登录\n3. 邮箱注册/登录\n\n请输入数字（1-3）：');
-                    
-                    if (!loginMethod || !['1', '2', '3'].includes(loginMethod)) {
-                        console.log('用户取消了登录选择');
-                        return;
-                    }
-                    
-                    if (loginMethod === '1') {
-                        // 匿名登录
-                        console.log('用户选择了匿名登录');
-                        currentUser = await AV.User.loginAnonymously();
-                        console.log('匿名用户登录成功:', currentUser);
-                        
-                        // 提示用户可以转化为普通用户
-                        const convertToNormal = confirm('您当前是匿名用户。匿名用户登出后将无法再次登录同一账户，且数据可能丢失。\n\n是否立即设置用户名和密码，将账户转化为普通用户？');
-                        
-                        if (convertToNormal) {
-                            const username = prompt('请输入用户名：');
-                            const password = prompt('请输入密码：');
-                            
-                            if (username && password) {
-                                try {
-                                    currentUser.setUsername(username);
-                                    currentUser.setPassword(password);
-                                    await currentUser.signUp();
-                                    console.log('匿名用户转化为普通用户成功');
-                                    alert('账户设置成功！您现在可以使用用户名和密码登录了。');
-                                } catch (error) {
-                                    console.error('转化为普通用户失败:', error);
-                                    alert('账户设置失败：' + error.message);
-                                }
-                            }
-                        }
-                    } else if (loginMethod === '2') {
-                        // 用户名+密码注册/登录
-                        console.log('用户选择了用户名+密码注册/登录');
-                        const username = prompt('请输入用户名：');
-                        const password = prompt('请输入密码：');
-                        
-                        if (!username || !password) {
-                            console.log('用户取消了注册/登录');
-                            return;
-                        }
-                        
-                        try {
-                            // 尝试登录
-                            currentUser = await AV.User.logIn(username, password);
-                            console.log('用户登录成功:', currentUser);
-                            alert('登录成功！');
-                        } catch (loginError) {
-                            // 登录失败，尝试注册
-                            console.log('登录失败，尝试注册新用户');
-                            try {
-                                currentUser = new AV.User();
-                                currentUser.setUsername(username);
-                                currentUser.setPassword(password);
-                                await currentUser.signUp();
-                                console.log('新用户注册成功:', currentUser);
-                                alert('注册成功！');
-                            } catch (signupError) {
-                                console.error('注册失败:', signupError);
-                                alert('注册失败：' + signupError.message);
-                                return;
-                            }
-                        }
-                    } else if (loginMethod === '3') {
-                        // 邮箱注册/登录
-                        console.log('用户选择了邮箱注册/登录');
-                        const email = prompt('请输入邮箱：');
-                        const password = prompt('请输入密码：');
-                        
-                        if (!email || !password) {
-                            console.log('用户取消了注册/登录');
-                            return;
-                        }
-                        
-                        try {
-                            // 尝试登录
-                            currentUser = await AV.User.logInWithEmail(email, password);
-                            console.log('用户登录成功:', currentUser);
-                            alert('登录成功！');
-                        } catch (loginError) {
-                            // 登录失败，尝试注册
-                            console.log('登录失败，尝试注册新用户');
-                            try {
-                                currentUser = new AV.User();
-                                currentUser.setEmail(email);
-                                currentUser.setUsername(email.split('@')[0]); // 使用邮箱前缀作为用户名
-                                currentUser.setPassword(password);
-                                await currentUser.signUp();
-                                console.log('新用户注册成功:', currentUser);
-                                alert('注册成功！');
-                            } catch (signupError) {
-                                console.error('注册失败:', signupError);
-                                alert('注册失败：' + signupError.message);
-                                return;
-                            }
-                        }
-                    }
-                }
-                
-                // 获取elapsedTime变量
-                // 由于作用域问题，我们需要从计时器显示中解析时间
-                const timerDisplay = document.getElementById('timer-control-display') || document.getElementById('timer-display');
-                if (!timerDisplay) {
-                    throw new Error('计时器显示元素未找到');
-                }
-                
-                const timeStr = timerDisplay.textContent;
-                console.log('当前时间显示:', timeStr);
-                
-                // 解析时间字符串为毫秒
-                const [minutes, seconds] = timeStr.split(':');
-                const [sec, ms] = seconds.split('.');
-                const totalMilliseconds = parseInt(minutes) * 60 * 1000 + parseInt(sec) * 1000 + parseInt(ms) * 10;
-                
-                console.log('解析后的时间（毫秒）:', totalMilliseconds);
-                
-                // 更新用户的时间统计
-                // 使用LeanCloud专业排行榜SDK，将毫秒转换为秒
-                const leaderboard = AV.Leaderboard.createWithoutData('time');
-                await leaderboard.updateStatistics(currentUser, {
-                    time: totalMilliseconds / 1000 // 转换为秒
-                });
-                
-                console.log('时间记录上传成功');
-                alert('时间记录已成功上传到排行榜！');
-            } catch (error) {
-                console.error('上传时间记录失败:', error);
-                alert('上传时间记录失败：' + error.message + '，请稍后重试');
-            }
-        }
-    </script>
-
 </body>
 </html>
