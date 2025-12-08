@@ -124,14 +124,14 @@
         <button class="back-home" onclick="window.location.href='index.html'">返回首页</button>
     </div>
     
-    <!-- LeanCloud SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.17.0/dist/av-min.js"></script>
+    <!-- LeanCloud SDK (使用国内CDN) -->
+    <script src="//code.bdstatic.com/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
     
     <script>
         // LeanCloud配置
-        const APP_ID = "0nq2Vx9hLt32hN59Zt0p0GtA-gzGzoHsz";
-        const APP_KEY = "4H7qU79c4bE69I44K55QpIuZ";
-        const SERVER_URL = "https://0nq2vx9h.lc-cn-n1-shared.com";
+        const APP_ID = "23WBNLRoympdUyZdwnxzSI0i-MdYXbMMI";
+        const APP_KEY = "wtSe16WHzyp8TIxoKZE2msvo";
+        const SERVER_URL = "https://23wbnlro.lc-cn-n1-shared.com";
         
         // 初始化LeanCloud
         function initLeanCloud() {
@@ -146,7 +146,7 @@
                 // 检查是否已加载SDK
                 if (typeof AV === 'undefined') {
                     console.error('LeanCloud SDK未加载');
-                    reject(new Error('LeanCloud SDK未加载'));
+                    reject(new Error('LeanCloud SDK未加载，请检查网络连接或刷新页面重试'));
                     return;
                 }
                 
@@ -197,14 +197,18 @@
                 // 生成排行榜HTML
                 let html = '';
                 rankings.forEach((ranking, index) => {
-                    const user = ranking.user ? (ranking.user.username || '匿名用户') : '匿名用户';
+                    // 获取用户的用户名
+                    let username = '匿名用户';
+                    if (ranking.user) {
+                        username = ranking.user.get('username') || ranking.user.attributes.username || '匿名用户';
+                    }
                     const time = formatTime(ranking.value);
                     const date = new Date(ranking.updatedAt).toLocaleString();
                     
                     html += `
                         <tr>
                             <td>${index + 1}</td>
-                            <td>${user}</td>
+                            <td>${username}</td>
                             <td>${time}</td>
                             <td>${date}</td>
                         </tr>
@@ -218,6 +222,39 @@
             }
         }
         
+        // 检查当前用户是否为匿名用户，并提供转化选项
+        function checkAnonymousUser() {
+            const currentUser = AV.User.current();
+            if (currentUser && currentUser.isAnonymous()) {
+                const convertToNormal = confirm('您当前是匿名用户。匿名用户登出后将无法再次登录同一账户，且数据可能丢失。\n\n是否设置用户名和密码，将账户转化为普通用户？');
+                
+                if (convertToNormal) {
+                    const username = prompt('请输入用户名：');
+                    const password = prompt('请输入密码：');
+                    
+                    if (username && password) {
+                        try {
+                            currentUser.setUsername(username);
+                            currentUser.setPassword(password);
+                            currentUser.signUp().then(
+                                (user) => {
+                                    console.log('匿名用户转化为普通用户成功');
+                                    alert('账户设置成功！您现在可以使用用户名和密码登录了。');
+                                },
+                                (error) => {
+                                    console.error('转化为普通用户失败:', error);
+                                    alert('账户设置失败：' + error.message);
+                                }
+                            );
+                        } catch (error) {
+                            console.error('转化为普通用户失败:', error);
+                            alert('账户设置失败：' + error.message);
+                        }
+                    }
+                }
+            }
+        }
+        
         // 关闭排行榜
         function closeLeaderboard() {
             document.getElementById('leaderboard-page').style.display = 'none';
@@ -227,6 +264,7 @@
         function showLeaderboard() {
             document.getElementById('leaderboard-page').style.display = 'block';
             loadLeaderboardData();
+            checkAnonymousUser();
         }
         
         // 页面加载完成后自动显示排行榜
